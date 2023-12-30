@@ -1,5 +1,6 @@
 const limine = @import("limine");
 const std = @import("std");
+const Ports = @import("modules/ports.zig");
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
@@ -24,24 +25,8 @@ export fn _start() callconv(.C) noreturn {
         done();
     }
 
-    // Ensure we got a framebuffer.
-    if (framebuffer_request.response) |framebuffer_response| {
-        if (framebuffer_response.framebuffer_count < 1) {
-            done();
-        }
-
-        // Get the first framebuffer's information.
-        const framebuffer = framebuffer_response.framebuffers()[0];
-
-        for (0..100) |i| {
-            // Calculate the pixel offset using the framebuffer information we obtained above.
-            // We skip `i` scanlines (pitch is provided in bytes) and add `i * 4` to skip `i` pixels forward.
-            const pixel_offset = i * framebuffer.pitch + i * 4;
-
-            // Write 0xFFFFFFFF to the provided pixel offset to fill it white.
-            @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = 0xFFFFFFFF;
-        }
-    }
+    const serial_port = Ports.SerialPort.new(0x3F8);
+    _  = serial_port.write_message("Hello, world!\n") catch |e| {_ = e;};
 
     // We're done, just hang...
     done();
