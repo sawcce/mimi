@@ -5,8 +5,8 @@ pub const ModuleSpec = struct {
 
 // TODO: Keep track of loaded modules and support for deinit
 
-pub fn init_modules(modules: []ModuleSpec) void {
+pub fn init_modules(modules: []const ModuleSpec) void {
     for (modules) |module| {
-        module.init();
+        if (module.init) |init| init();
     }
 }
