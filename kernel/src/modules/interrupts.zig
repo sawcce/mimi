@@ -35,8 +35,6 @@ export fn catcher() callconv(.Naked) void {
         \\pop %%rax
         \\iretq
     );
-
-    unreachable;
 }
 
 pub const Frame = extern struct {
@@ -64,7 +62,7 @@ pub fn add_interrupt(idx: u8, handler: *const Handler) void {
     const pointer = @intFromPtr(trampolines[idx]);
     handlers[idx] = handler;
 
-    var cs = asm ("mov %%cs, %[ret]"
+    const cs = asm ("mov %%cs, %[ret]"
         : [ret] "=r" (-> u16),
     );
 
