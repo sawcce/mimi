@@ -108,7 +108,7 @@ pub const IDTR = packed struct {
     base: u64,
 };
 
-fn name(intnum: u64) []const u8 {
+pub fn name(intnum: u64) []const u8 {
     return switch (intnum) {
         0x00 => "Divide by zero",
         0x01 => "Debug",
