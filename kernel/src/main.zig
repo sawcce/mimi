@@ -1,6 +1,7 @@
 const limine = @import("limine");
 const std = @import("std");
 const Ports = @import("modules/ports.zig");
+const Module = @import("modules/module.zig");
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
@@ -18,6 +19,8 @@ inline fn done() noreturn {
     }
 }
 
+const Modules: []Module.ModuleSpec = {};
+
 // The following will be our kernel's entry point.
 export fn _start() callconv(.C) noreturn {
     // Ensure the bootloader actually understands our base revision (see spec).
@@ -25,8 +28,7 @@ export fn _start() callconv(.C) noreturn {
         done();
     }
 
-    const serial_port = Ports.SerialPort.new(0x3F8);
-    _  = serial_port.write_message("Hello, world!\n") catch |e| {_ = e;};
+    Module.init_modules(Modules); 
 
     // We're done, just hang...
     done();
