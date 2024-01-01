@@ -121,6 +121,14 @@ pub const SerialPort = struct {
         self.data.write(data);
     }
 
+    // Same as write_message but without the error
+    // type required by `std.io.Writer`
+    pub fn write_string(self: @This(), message: []const u8) void {
+        for (message) |letter| {
+            self.send(letter);
+        }
+    }
+
     pub fn write_message(self: @This(), message: []const u8) error{}!usize {
         for (message) |letter| {
             self.send(letter);
