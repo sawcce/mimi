@@ -4,6 +4,8 @@
 const Ports = @import("ports.zig");
 const ModuleSpec = @import("module.zig").ModuleSpec;
 
+const std = @import("std");
+
 const Outputs = enum { Serial };
 
 pub var Output = Outputs.Serial;
@@ -23,4 +25,8 @@ pub fn write_message(message: []const u8) void {
     switch (Output) {
         Outputs.Serial => SerialPort.write_string(message),
     }
+}
+
+pub fn write_fmt(comptime fmt: []const u8, args: anytype) !void {
+    try std.fmt.format(SerialPort.writer(), fmt, args);
 }
