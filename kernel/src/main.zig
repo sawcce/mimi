@@ -33,7 +33,7 @@ export fn _start() callconv(.C) noreturn {
     }
 
     Module.init_modules(&Modules);
-    Procedures.write_message("Modules init!");
+    Procedures.write_message("Modules init!\n");
 
     // We're done, just hang...
     done();
