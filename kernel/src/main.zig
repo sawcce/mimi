@@ -19,7 +19,11 @@ inline fn done() noreturn {
     }
 }
 
-const Modules: []Module.ModuleSpec = {};
+const Procedures = @import("modules/procedures.zig");
+
+const Modules = [_]Module.ModuleSpec{
+    Procedures.Module,
+};
 
 // The following will be our kernel's entry point.
 export fn _start() callconv(.C) noreturn {
@@ -28,7 +32,8 @@ export fn _start() callconv(.C) noreturn {
         done();
     }
 
-    Module.init_modules(Modules); 
+    Module.init_modules(&Modules);
+    Procedures.write_message("Modules init!");
 
     // We're done, just hang...
     done();
