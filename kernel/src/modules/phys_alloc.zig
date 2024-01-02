@@ -93,3 +93,18 @@ pub fn allocate_frame() ?*anyopaque {
 
     return null;
 }
+
+/// Frees a page frame, only checks if the page has already been freed
+/// and not if it is in the range of the allocator
+pub fn free_frame(frame: *anyopaque) !void {
+    const frames_base = @intFromPtr(Allocator.frames);
+    const offset = @intFromPtr(frame) - frames_base;
+    const i = offset / (PageSize * 8);
+    const j: u3 = @intCast((offset % (PageSize * 8)) / PageSize);
+
+    const mask = @as(u8, @intCast(1)) << (7 - j);
+
+    if (Allocator.bitmap[i] & mask == 0) return error.AlreadyFreed;
+
+    Allocator.bitmap[i] -= mask;
+}
