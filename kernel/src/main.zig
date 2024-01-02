@@ -20,10 +20,12 @@ inline fn done() noreturn {
 }
 
 const Procedures = @import("modules/procedures.zig");
+const Exceptions = @import("modules/exceptions.zig");
 const PhysAlloc = @import("modules/phys_alloc.zig");
 
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
+    Exceptions.Module,
     PhysAlloc.Module,
 };
 
