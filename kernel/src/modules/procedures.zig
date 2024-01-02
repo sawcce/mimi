@@ -1,5 +1,4 @@
 ///! Standard procedures for the kernel such as:
-///! - Exceptions handling
 ///! - Writing to the standard output
 const Ports = @import("ports.zig");
 const ModuleSpec = @import("module.zig").ModuleSpec;
