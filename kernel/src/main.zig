@@ -20,9 +20,11 @@ inline fn done() noreturn {
 }
 
 const Procedures = @import("modules/procedures.zig");
+const PhysAlloc = @import("modules/phys_alloc.zig");
 
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
+    PhysAlloc.Module,
 };
 
 // The following will be our kernel's entry point.
@@ -36,5 +38,16 @@ export fn _start() callconv(.C) noreturn {
     Procedures.write_message("Modules successfully initialized!\n");
 
     // We're done, just hang...
+    done();
+}
+
+pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, e: ?usize) noreturn {
+    @setCold(true);
+
+    _ = error_return_trace;
+    _ = e;
+
+    try Procedures.write_fmt("{s}\n", .{msg});
+
     done();
 }
