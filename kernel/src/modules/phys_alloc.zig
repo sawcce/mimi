@@ -13,13 +13,14 @@ pub const Module = ModuleSpec{
 
 pub const PageSize: u64 = 4096;
 
-const PageAllocator = struct {
+const PageAllocator = packed struct {
     page_amount: u64,
     bitmap: [*]u8,
     frames: *anyopaque,
 };
 
-pub var Allocator: ?*PageAllocator = null;
+pub var initialized = false;
+pub var Allocator: PageAllocator = undefined;
 
 var Bitmap: []u32 = undefined;
 
@@ -49,13 +50,25 @@ pub fn init() void {
         const n: f64 = 8 * t / @as(f64, @floatCast(1.0 + 8.0 * @as(f64, @floatFromInt(PageSize))));
         const amount_of_pages: u64 = @intFromFloat(@floor(n));
 
-        const allocator_base = std.mem.alignForward(u64, biggest_entry.?.base, PageSize);
-        const frames_base = std.mem.alignForward(u64, allocator_base + amount_of_pages, PageSize);
+        const bitmap_base = std.mem.alignForward(u64, biggest_entry.?.base, PageSize);
+        const frames_base = std.mem.alignForward(u64, bitmap_base + amount_of_pages, PageSize);
         const end = std.mem.alignBackward(u64, biggest_entry.?.base + biggest_entry.?.length, PageSize);
-        const new_page_amount = (end - frames_base) / 4096;
+        const new_page_amount: u64 = (end - frames_base) / 4096;
+
+        Allocator.page_amount = new_page_amount;
+        Allocator.bitmap = @ptrFromInt(bitmap_base);
+        Allocator.frames = @ptrFromInt(frames_base);
+
+        initialized = true;
+    }
+}
+
+pub fn allocate_frame() *anyopaque {
+    if (initialized == false) return null;
 
         Allocator = @ptrCast(allocator_base);
         Allocator.?.page_amount = new_page_amount;
+        Allocator.?.bitmap = bitmap_base;
         Allocator.?.frames = frames_base;
     }
 }
