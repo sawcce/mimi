@@ -5,6 +5,7 @@ const Limine = @import("limine");
 const std = @import("std");
 
 pub export var MemoryMapRequest: Limine.MemoryMapRequest = .{};
+pub export var HHDMRequest: Limine.HhdmRequest = .{};
 
 pub const Module = ModuleSpec{
     .init = init,
@@ -56,19 +57,39 @@ pub fn init() void {
         const new_page_amount: u64 = (end - frames_base) / 4096;
 
         Allocator.page_amount = new_page_amount;
-        Allocator.bitmap = @ptrFromInt(bitmap_base);
-        Allocator.frames = @ptrFromInt(frames_base);
+        Allocator.bitmap = @ptrFromInt(biggest_entry.?.base + HHDMRequest.response.?.offset);
+        Allocator.frames = @ptrFromInt(frames_base + HHDMRequest.response.?.offset);
+
+        var addr = bitmap_base;
+        while (addr < frames_base) : (addr += 16) {
+            const ptr: *u128 = @ptrFromInt(addr + HHDMRequest.response.?.offset);
+            ptr.* = 0;
+        }
 
         initialized = true;
     }
 }
 
-pub fn allocate_frame() *anyopaque {
+/// Allocates a physical frame and returns the physical address.
+///
+/// The allocated frames aren't clean by default meaning
+/// they aren't zeroed out
+pub fn allocate_frame() ?*anyopaque {
     if (initialized == false) return null;
 
-        Allocator = @ptrCast(allocator_base);
-        Allocator.?.page_amount = new_page_amount;
-        Allocator.?.bitmap = bitmap_base;
-        Allocator.?.frames = frames_base;
+    for (0..Allocator.page_amount) |i| {
+        const entry = Allocator.bitmap[i];
+        if (entry == 0b11111111) continue;
+        var j: u3 = 0;
+        while (j < 8) : (j += 1) {
+            const t = (entry << j) & 0b10000000;
+            if (t == 0) {
+                Allocator.bitmap[i] += @as(u8, @intCast(1)) << (7 - j);
+                const frames_base = @intFromPtr(Allocator.frames);
+                return @ptrFromInt(frames_base + PageSize * i * 8 + PageSize * j);
+            }
+        }
     }
+
+    return null;
 }
