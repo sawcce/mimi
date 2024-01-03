@@ -39,15 +39,6 @@ export fn _start() callconv(.C) noreturn {
     Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
 
-    for (0..58) |i| {
-        _ = i;
-        const addr = PhysAlloc.allocate_frame();
-        Procedures.write_fmt("Frame: {*}\n", .{addr}) catch {};
-        PhysAlloc.free_frame(addr.?) catch |e| {
-            Procedures.write_fmt("Error: {}\n", .{e}) catch {};
-        };
-    }
-
     // We're done, just hang...
     done();
 }
