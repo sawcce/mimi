@@ -14,18 +14,26 @@ pub const Module = ModuleSpec{
 
 pub const PageSize: u64 = 4096;
 
-const PageAllocator = packed struct {
-    page_amount: u64,
-    bitmap: [*]u8,
-    frames: *anyopaque,
+const PAGE_SIZES = ps: {
+    comptime var current_shift = 12; // log2 of PageSize
+    comptime var sizes: []const usize = &[0]usize{};
+
+    while (current_shift < 24) : (current_shift += 1) {
+        sizes = sizes ++ [1]usize{1 << current_shift};
+    }
+
+    break :ps sizes;
 };
 
-pub var initialized = false;
-pub var Allocator: PageAllocator = undefined;
+pub var free_roots_per_order = [_]u64{0} ** PAGE_SIZES.len;
 
-var Bitmap: []u32 = undefined;
+pub var initialized = false;
 
 pub fn init() void {
+    for (PAGE_SIZES) |size| {
+        Procedures.write_fmt("Size: {}\n", .{size}) catch {};
+    }
+
     if (MemoryMapRequest.response) |memory_map| {
         var biggest_entry: ?*Limine.MemoryMapEntry = null;
 
@@ -42,69 +50,96 @@ pub fn init() void {
             return;
         }
 
-        // Equation for the amount of pages available (n) for a set amount of memory (t) and page size (p):
-        // t = n/8 + pn
-        // n/8 corresponds to the size of the bitmap as one byte can store information about 8 pages
-        // you can then find the amount of pages:
-        // n = 8t/(1+8p)
-        const t: f64 = @floatFromInt(biggest_entry.?.length);
-        const n: f64 = 8 * t / @as(f64, @floatCast(1.0 + 8.0 * @as(f64, @floatFromInt(PageSize))));
-        const amount_of_pages: u64 = @intFromFloat(@floor(n));
-
-        const bitmap_base = std.mem.alignForward(u64, biggest_entry.?.base, PageSize);
-        const frames_base = std.mem.alignForward(u64, bitmap_base + amount_of_pages, PageSize);
-        const end = std.mem.alignBackward(u64, biggest_entry.?.base + biggest_entry.?.length, PageSize);
-        const new_page_amount: u64 = (end - frames_base) / 4096;
-
-        Allocator.page_amount = new_page_amount;
-        Allocator.bitmap = @ptrFromInt(biggest_entry.?.base + HHDMRequest.response.?.offset);
-        Allocator.frames = @ptrFromInt(frames_base + HHDMRequest.response.?.offset);
-
-        var addr = bitmap_base;
-        while (addr < frames_base) : (addr += 16) {
-            const ptr: *u128 = @ptrFromInt(addr + HHDMRequest.response.?.offset);
-            ptr.* = 0;
-        }
+        add_entry(biggest_entry.?.base + HHDMRequest.response.?.offset, std.mem.alignBackward(u64, biggest_entry.?.length, PageSize));
 
         initialized = true;
     }
 }
 
-/// Allocates a physical frame and returns the physical address.
-///
-/// The allocated frames aren't clean by default meaning
-/// they aren't zeroed out
-pub fn allocate_frame() ?*anyopaque {
-    if (initialized == false) return null;
+/// Allocates for a set size corresponding to
+/// an index in the PAGE_SIZE list
+pub fn alloc(index: usize) !u64 {
+    if (free_roots_per_order[index] == 0) {
+        if (index + 1 >= PAGE_SIZES.len)
+            return error.OutOfMemory;
 
-    for (0..Allocator.page_amount) |i| {
-        const entry = Allocator.bitmap[i];
-        if (entry == 0b11111111) continue;
-        var j: u3 = 0;
-        while (j < 8) : (j += 1) {
-            const t = (entry << j) & 0b10000000;
-            if (t == 0) {
-                Allocator.bitmap[i] += @as(u8, @intCast(1)) << (7 - j);
-                const frames_base = @intFromPtr(Allocator.frames);
-                return @ptrFromInt(frames_base + PageSize * i * 8 + PageSize * j);
+        var next_alloc = try alloc(index + 1);
+        var next_size = PAGE_SIZES[index + 1];
+        const desired_size = PAGE_SIZES[index];
+
+        while (next_size > desired_size) {
+            free(next_alloc, index);
+            next_alloc += desired_size;
+            next_size -= desired_size;
+        }
+
+        return next_alloc;
+    }
+
+    const addr = free_roots_per_order[index];
+    const ptr_new_root: *u64 = @ptrFromInt(addr);
+    const new_root = ptr_new_root.*;
+
+    free_roots_per_order[index] = new_root;
+    return addr;
+}
+
+/// Frees data by PAGE_SIZE index and address
+pub fn free(addr: u64, index: usize) void {
+    const last_freed = free_roots_per_order[index];
+    free_roots_per_order[index] = addr;
+    const new_entry: *u64 = @ptrFromInt(addr);
+    new_entry.* = last_freed;
+}
+
+/// Takes a memory map entry and adds it
+/// to the free roots
+pub fn add_entry(addr: u64, length: u64) void {
+    var current_addr = addr;
+    var current_length = length;
+
+    while (current_length > 0) {
+        for (0..PAGE_SIZES.len) |i| {
+            const size = PAGE_SIZES[PAGE_SIZES.len - i - 1];
+
+            if (current_length >= size) {
+                free(current_addr, i);
+                current_length -= size;
+                current_addr += size;
             }
         }
     }
-
-    return null;
 }
 
-/// Frees a page frame, only checks if the page has already been freed
-/// and not if it is in the range of the allocator
-pub fn free_frame(frame: *anyopaque) !void {
-    const frames_base = @intFromPtr(Allocator.frames);
-    const offset = @intFromPtr(frame) - frames_base;
-    const i = offset / (PageSize * 8);
-    const j: u3 = @intCast((offset % (PageSize * 8)) / PageSize);
+/// Same as for alloc but takes a size
+/// instead of an index
+pub fn allocate_by_size(size: usize) !u64 {
+    for (PAGE_SIZES, 0..) |page_size, i| {
+        if (page_size >= size) {
+            return try alloc(i);
+        }
+    }
 
-    const mask = @as(u8, @intCast(1)) << (7 - j);
+    return error.SizeTooSmall;
+}
 
-    if (Allocator.bitmap[i] & mask == 0) return error.AlreadyFreed;
+/// Gives the actual size that would allocated
+/// for an arbitrary size
+pub fn page_size_for_alloc(size: usize) usize {
+    for (PAGE_SIZES) |page_size| {
+        if (page_size >= size) {
+            return page_size;
+        }
+    }
+}
 
-    Allocator.bitmap[i] -= mask;
+/// Frees data by size instead of PAGE_SIZE index
+pub fn free_by_size(size: usize) !void {
+    for (PAGE_SIZES, 0..) |page_size, i| {
+        if (page_size >= size) {
+            return free(page_size, i);
+        }
+    }
+
+    unreachable;
 }
