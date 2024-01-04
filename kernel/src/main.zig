@@ -22,10 +22,12 @@ inline fn done() noreturn {
 const Procedures = @import("modules/procedures.zig");
 const Exceptions = @import("modules/exceptions.zig");
 const PhysAlloc = @import("modules/phys_alloc.zig");
+const ACPI = @import("modules/acpi/acpi.zig");
 
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
     Exceptions.Module,
+    ACPI.Module,
 };
 
 // The following will be our kernel's entry point.
