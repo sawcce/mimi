@@ -5,6 +5,7 @@ const Procedures = @import("procedures.zig");
 const std = @import("std");
 
 pub const Module = ModuleSpec{
+    .name = "Exceptions",
     .init = init,
     .deinit = null,
 };

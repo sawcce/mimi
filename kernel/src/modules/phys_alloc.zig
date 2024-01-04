@@ -8,6 +8,7 @@ pub export var MemoryMapRequest: Limine.MemoryMapRequest = .{};
 pub export var HHDMRequest: Limine.HhdmRequest = .{};
 
 pub const Module = ModuleSpec{
+    .name = "Physical Allocation",
     .init = init,
     .deinit = null,
 };

@@ -10,6 +10,7 @@ const Outputs = enum { Serial };
 pub var Output = Outputs.Serial;
 
 pub const Module = ModuleSpec{
+    .name = "Procedures",
     .init = init,
     .deinit = null,
 };

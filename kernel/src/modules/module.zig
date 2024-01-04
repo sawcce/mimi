@@ -1,4 +1,5 @@
 pub const ModuleSpec = struct {
+    name: []const u8,
     init: ?*const fn () void,
     deinit: ?*const fn () void,
 };
