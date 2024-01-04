@@ -49,7 +49,7 @@ pub fn init() void {
             return;
         }
 
-        add_entry(biggest_entry.?.base + HHDMRequest.response.?.offset, std.mem.alignBackward(u64, biggest_entry.?.length, PageSize));
+        add_entry(biggest_entry.?.base + offset, std.mem.alignBackward(u64, biggest_entry.?.length, PageSize));
 
         initialized = true;
     }

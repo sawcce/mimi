@@ -38,7 +38,7 @@ const XSDT = extern struct {
 
     pub fn getEntry(self: *const @This(), i: usize) *SDTHeader {
         const addr = @as(*align(1) u64, @ptrFromInt(@intFromPtr(self) + @sizeOf(SDTHeader) + @sizeOf(u64) * i));
-        return @as(*SDTHeader, @ptrFromInt(addr.* + PhysAlloc.HHDMRequest.response.?.offset));
+        return @as(*SDTHeader, @ptrFromInt(addr.* + PhysAlloc.offset));
     }
 };
 
@@ -83,7 +83,7 @@ pub fn init() void {
     // TODO: Support for other acpi versions
     if (rsdp.revision != 2) return;
     const xsdp: *align(1) XSDP = @ptrCast(@alignCast(rsdp_response.address));
-    const xsdt: *XSDT = @as(*XSDT, @ptrFromInt(xsdp.xsdt_address + PhysAlloc.HHDMRequest.response.?.offset));
+    const xsdt: *XSDT = @as(*XSDT, @ptrFromInt(xsdp.xsdt_address + PhysAlloc.offset));
 
     for (0..xsdt.getEntriesAmount()) |i| {
         Procedures.write_fmt("Entry {}\n", .{xsdt.getEntry(i)}) catch {};
