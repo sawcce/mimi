@@ -15,18 +15,24 @@ pub const Module = ModuleSpec{
     .deinit = null,
 };
 
+pub var initialized = false;
 pub var SerialPort: Ports.SerialPort = undefined;
 
 pub fn init() void {
     SerialPort = Ports.SerialPort.new(0x3F8);
+    initialized = true;
 }
 
 pub fn write_message(message: []const u8) void {
+    if (!initialized) return;
+
     switch (Output) {
         Outputs.Serial => SerialPort.write_string(message),
     }
 }
 
 pub fn write_fmt(comptime fmt: []const u8, args: anytype) !void {
+    if (!initialized) return;
+
     try std.fmt.format(SerialPort.writer(), fmt, args);
 }

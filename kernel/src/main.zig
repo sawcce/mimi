@@ -26,7 +26,6 @@ const PhysAlloc = @import("modules/phys_alloc.zig");
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
     Exceptions.Module,
-    PhysAlloc.Module,
 };
 
 // The following will be our kernel's entry point.
@@ -35,6 +34,8 @@ export fn _start() callconv(.C) noreturn {
     if (!base_revision.is_supported()) {
         done();
     }
+
+    if(PhysAlloc.Module.init) |init| init();
 
     Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
