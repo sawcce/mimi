@@ -14,6 +14,7 @@ pub const Module = ModuleSpec{
 };
 
 pub const PageSize: u64 = 4096;
+pub var offset: u64 = undefined;
 
 const PAGE_SIZES = ps: {
     comptime var current_shift = 12; // log2 of PageSize
@@ -31,10 +32,7 @@ pub var free_roots_per_order = [_]u64{0} ** PAGE_SIZES.len;
 pub var initialized = false;
 
 pub fn init() void {
-    for (PAGE_SIZES) |size| {
-        Procedures.write_fmt("Size: {}\n", .{size}) catch {};
-    }
-
+    if (HHDMRequest.response) |res| offset = res.offset;
     if (MemoryMapRequest.response) |memory_map| {
         var biggest_entry: ?*Limine.MemoryMapEntry = null;
 
