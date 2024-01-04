@@ -131,15 +131,52 @@ pub fn page_size_for_alloc(size: usize) usize {
             return page_size;
         }
     }
+    unreachable;
 }
 
 /// Frees data by size instead of PAGE_SIZE index
-pub fn free_by_size(size: usize) !void {
+pub fn free_by_size(addr: u64, size: usize) void {
     for (PAGE_SIZES, 0..) |page_size, i| {
         if (page_size >= size) {
-            return free(page_size, i);
+            return free(addr, i);
         }
     }
 
     unreachable;
+}
+
+pub const Allocator = struct {
+    fn alloc_(_: *anyopaque, len: usize, ptr_align: u8, _: usize) ?[*]u8 {
+        const alloc_len = page_size_for_alloc(@max(len, std.math.shl(usize, 1, ptr_align)));
+
+        return @ptrFromInt(allocate_by_size(alloc_len) catch {
+            return null;
+        });
+    }
+
+    fn resize(_: *anyopaque, old_buf: []u8, buf_align: u8, new_len: usize, _: usize) bool {
+        const old_alloc_len = page_size_for_alloc(@max(old_buf.len, std.math.shl(usize, 1, buf_align)));
+        const new_alloc_len = page_size_for_alloc(@max(new_len, std.math.shl(usize, 1, buf_align)));
+        const addr = @intFromPtr(old_buf.ptr);
+
+        if (new_alloc_len > old_alloc_len)
+            return false;
+        var curr_alloc_len = old_alloc_len;
+
+        while (curr_alloc_len > new_alloc_len) {
+            free_by_size(addr, curr_alloc_len / 2);
+            curr_alloc_len /= 2;
+        }
+        return true;
+    }
+
+    fn free_(_: *anyopaque, buf: []u8, buf_align: u8, _: usize) void {
+        free_by_size(@intFromPtr(buf.ptr), page_size_for_alloc(@max(buf.len, buf_align)));
+    }
+};
+
+pub const AllocatorVTable: std.mem.Allocator.VTable = .{ .alloc = Allocator.alloc_, .resize = Allocator.resize, .free = Allocator.free_ };
+
+pub fn allocator() std.mem.Allocator {
+    return .{ .ptr = undefined, .vtable = &AllocatorVTable };
 }
