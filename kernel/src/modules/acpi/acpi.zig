@@ -1,6 +1,7 @@
 const ModuleSpec = @import("../module.zig").ModuleSpec;
 const Procedures = @import("../procedures.zig");
 const PhysAlloc = @import("../phys_alloc.zig");
+const Apic = @import("apic.zig");
 
 const Limine = @import("limine");
 const std = @import("std");
@@ -63,7 +64,7 @@ pub const Signature = enum(u32) {
     }
 };
 
-const SDTHeader = extern struct {
+pub const SDTHeader = extern struct {
     signature: Signature align(1),
     length: u32,
     revision: u8,
@@ -86,6 +87,10 @@ pub fn init() void {
     const xsdt: *XSDT = @as(*XSDT, @ptrFromInt(xsdp.xsdt_address + PhysAlloc.offset));
 
     for (0..xsdt.getEntriesAmount()) |i| {
-        Procedures.write_fmt("Entry {}\n", .{xsdt.getEntry(i)}) catch {};
+        const entry = xsdt.getEntry(i);
+        switch (entry.signature) {
+            Signature.APIC => Apic.apic(@ptrCast(entry)),
+            else => {},
+        }
     }
 }
