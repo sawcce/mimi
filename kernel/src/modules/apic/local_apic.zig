@@ -26,7 +26,7 @@ pub const REG = enum(u32) {
     TDCR = 0x3e0,
 };
 
-const LAPIC = struct {
+pub const LAPIC = struct {
     pub fn readRegister(self: *const @This(), offset: REG) u32 {
         return @as(*u32, @ptrFromInt(@intFromPtr(self) + @intFromEnum(offset))).*;
     }

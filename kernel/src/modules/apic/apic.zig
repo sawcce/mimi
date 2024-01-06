@@ -1,6 +1,6 @@
 const Procedures = @import("../procedures.zig");
 const PhysAlloc = @import("../phys_alloc.zig");
-const ACPI = @import("acpi.zig");
+const ACPI = @import("../acpi/acpi.zig");
 const LocalAPIC = @import("local_apic.zig");
 
 const APICHeader = extern struct {
