@@ -12,7 +12,7 @@ pub const Module = ModuleSpec{
 
 pub fn init() void {
     for (0..0xF) |i| {
-        Interrupts.add_interrupt(@intCast(i), default_handler);
+        Interrupts.add_interrupt(@intCast(i), Interrupts.GateType.Interrupt, default_handler);
     }
 
     Interrupts.load();

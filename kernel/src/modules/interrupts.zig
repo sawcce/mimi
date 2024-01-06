@@ -58,7 +58,12 @@ pub fn load() void {
     );
 }
 
-pub fn add_interrupt(idx: u8, handler: *const Handler) void {
+pub const GateType = enum(u4) {
+    Interrupt = 0xE,
+    Trap = 0xF,
+};
+
+pub fn add_interrupt(idx: u8, gate_type: GateType, handler: *const Handler) void {
     const pointer = @intFromPtr(trampolines[idx]);
     handlers[idx] = handler;
 
@@ -69,7 +74,7 @@ pub fn add_interrupt(idx: u8, handler: *const Handler) void {
     var entry = InterruptDescriptor{};
 
     entry.selector = cs;
-    entry.options.gate_type = 0xE;
+    entry.options.gate_type = @intFromEnum(gate_type);
 
     entry.offset_low = @as(u16, @truncate(pointer));
     entry.offset_mid = @as(u16, @truncate(pointer >> 16));
