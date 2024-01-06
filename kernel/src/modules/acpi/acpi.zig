@@ -1,7 +1,7 @@
 const ModuleSpec = @import("../module.zig").ModuleSpec;
 const Procedures = @import("../procedures.zig");
 const PhysAlloc = @import("../phys_alloc.zig");
-const Apic = @import("apic.zig");
+const Apic = @import("../apic/apic.zig");
 
 const Limine = @import("limine");
 const std = @import("std");
