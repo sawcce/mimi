@@ -22,7 +22,7 @@ pub fn make_trampoline(comptime interruptIdx: u8) *const Trampoline {
         fn trampoline() callconv(.Naked) void {
             asm volatile ("push %[int]\njmp catcher\n"
                 :
-                : [int] "i" (@as(u8, interruptIdx)),
+                : [int] "i" (@as(u64, interruptIdx)),
             );
         }
     }.trampoline;
@@ -30,16 +30,60 @@ pub fn make_trampoline(comptime interruptIdx: u8) *const Trampoline {
 
 export fn catcher() callconv(.Naked) void {
     asm volatile (
+        \\push %%rax
+        \\push %%rbx
+        \\push %%rcx
+        \\push %%rdx
+        \\push %%rbp
+        \\push %%rsi
+        \\push %%rdi
+        \\push %%r8
+        \\push %%r9
+        \\push %%r10
+        \\push %%r11
+        \\push %%r12
+        \\push %%r13
+        \\push %%r14
+        \\push %%r15
         \\mov %%rsp, %%rdi
         \\call handler_fn
+        \\pop %%r15
+        \\pop %%r14
+        \\pop %%r13
+        \\pop %%r12
+        \\pop %%r11
+        \\pop %%r10
+        \\pop %%r9
+        \\pop %%r8
+        \\pop %%rdi
+        \\pop %%rsi
+        \\pop %%rbp
+        \\pop %%rdx
+        \\pop %%rcx
+        \\pop %%rbx
         \\pop %%rax
+        \\add $8, %%rsp
         \\iretq
     );
 }
 
 pub const Frame = extern struct {
+    r15: u64,
+    r14: u64,
+    r13: u64,
+    r12: u64,
+    r11: u64,
+    r10: u64,
+    r9: u64,
+    r8: u64,
+    rdi: u64,
+    rsi: u64,
+    rbp: u64,
+    rdx: u64,
+    rcx: u64,
+    rbx: u64,
+    rax: u64,
     idx: u64,
-    ec: u64,
 };
 
 export fn handler_fn(frame: *Frame) void {
