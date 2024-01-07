@@ -15,15 +15,16 @@ inline fn done() noreturn {
 }
 
 const Procedures = @import("modules/procedures.zig");
-const Exceptions = @import("modules/exceptions.zig");
+const Interrupts = @import("modules/interrupts/interrupts.zig");
 const PhysAlloc = @import("modules/phys_alloc.zig");
 const ACPI = @import("modules/acpi/acpi.zig");
 const Display = @import("modules/display/display.zig");
 
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
-    Exceptions.Module,
+    Interrupts.ExceptionsModule,
     ACPI.Module,
+    Interrupts.InterruptsModule,
     Display.Module,
 };
 
