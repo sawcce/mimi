@@ -59,7 +59,7 @@ pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, e: ?
     _ = error_return_trace;
     _ = e;
 
-    try Procedures.write_fmt("{s}\n", .{msg});
+    try Procedures.write_fmt("[PANIC!] {s}\n", .{msg});
 
     done();
 }
