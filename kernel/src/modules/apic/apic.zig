@@ -4,7 +4,6 @@ const Interrupts = @import("../interrupts.zig");
 const ACPI = @import("../acpi/acpi.zig");
 const LocalAPIC = @import("local_apic.zig");
 const IOAPIC = @import("io_apic.zig");
-const std = @import("std");
 
 const APICHeader = extern struct {
     header: ACPI.SDTHeader,
