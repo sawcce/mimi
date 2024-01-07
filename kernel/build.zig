@@ -31,6 +31,7 @@ pub fn build(b: *std.build.Builder) !void {
     kernel.addModule("limine", limine.module("limine"));
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
     kernel.pie = true;
+    kernel.red_zone = false;
 
     b.installArtifact(kernel);
 }
