@@ -28,15 +28,20 @@ pub const REG = enum(u32) {
 
 pub const LAPIC = struct {
     pub fn readRegister(self: *const @This(), offset: REG) u32 {
-        return @as(*u32, @ptrFromInt(@intFromPtr(self) + @intFromEnum(offset))).*;
+        return @as(*volatile u32, @ptrFromInt(@intFromPtr(self) + @intFromEnum(offset))).*;
     }
 
     pub fn writeRegister(self: *@This(), offset: REG, data: u32) void {
-        const ptr: *u32 = @ptrFromInt(@intFromPtr(self) + @intFromEnum(offset));
+        const ptr: *volatile u32 = @ptrFromInt(@intFromPtr(self) + @intFromEnum(offset));
         ptr.* = data;
     }
 };
 
 pub fn initLapic(lapic: *LAPIC) void {
+    lapic.writeRegister(REG.TPR, 0);
+
+    // Logical Destination Mode
+    lapic.writeRegister(REG.DFR, 0xffffffff); // Flat mode
+    lapic.writeRegister(REG.LDR, 0x01000000); // All cpus use logical id 1
     lapic.writeRegister(REG.SVR, 0x100 | 0xff);
 }

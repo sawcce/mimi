@@ -1,7 +1,10 @@
 const Procedures = @import("../procedures.zig");
 const PhysAlloc = @import("../phys_alloc.zig");
+const Interrupts = @import("../interrupts.zig");
 const ACPI = @import("../acpi/acpi.zig");
 const LocalAPIC = @import("local_apic.zig");
+const IOAPIC = @import("io_apic.zig");
+const std = @import("std");
 
 const APICHeader = extern struct {
     header: ACPI.SDTHeader,
@@ -60,12 +63,29 @@ const MADTLocalAPICNMI = packed struct {
     apic_lint: u8,
 };
 
+const MADTNMI = packed struct { flags: u16, gsi: u32 };
+
+// https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/05_ACPI_Software_Programming_Model/ACPI_Software_Programming_Model.html#interrupt-source-override-structure
+const MADTINTSourceOverride = packed struct {
+    bus: u8,
+    source: u8,
+    gsi: u32,
+    flags: u16,
+};
+
 pub var CPU_COUNT: u8 = 0;
 pub var CPU_APIC_ID: [256]u8 = undefined;
 
+var LAPIC_REF: ?*LocalAPIC.LAPIC = null;
+
 pub fn apic(entry: *APICHeader) void {
     const lapic: *LocalAPIC.LAPIC = @ptrFromInt(entry.interrupt_controller_addr + PhysAlloc.offset);
+    LAPIC_REF = lapic;
+
     LocalAPIC.initLapic(lapic);
+
+    const lapic_id = lapic.readRegister(LocalAPIC.REG.ID);
+    Procedures.write_fmt("Local APIC id: {}\n", .{lapic_id}) catch {};
 
     var curr_addr = @intFromPtr(entry) + 44;
     const end_addr = @intFromPtr(entry) + entry.header.length;
@@ -81,7 +101,28 @@ pub fn apic(entry: *APICHeader) void {
             },
             EntryType.IOApic => {
                 const io_apic = structure.cast_data(MADTIOAPIC);
-                Procedures.write_fmt("IO Apic: {}\n", .{io_apic}) catch {};
+                IOAPIC.GLOBAL_IOAPIC = @ptrFromInt(io_apic.addr + PhysAlloc.offset);
+                IOAPIC.GLOBAL_IOAPIC.?.write(IOAPIC.Register.APICID, lapic_id);
+            },
+            EntryType.IntSourceOverride => {
+                const override = structure.cast_data(MADTINTSourceOverride);
+                const ioredtbl = IOAPIC.IOREDTBL{
+                    .vector = override.source + 0x20,
+                    .delivery_mode = 0,
+                    .destination_mode = false,
+                    .pin_polarity = false,
+                    .trigger_mode = false,
+                    .mask = false,
+                    .remote_irr = false,
+                    .delivery_status = false,
+                    .destination = @as(u8, @intCast(lapic_id)),
+                };
+
+                IOAPIC.GLOBAL_IOAPIC.?.write_ioredtbl(override.gsi, ioredtbl);
+            },
+            EntryType.NMISource => {
+                const nmi = structure.cast_data(MADTNMI);
+                Procedures.write_fmt("NMI: {}\n", .{nmi}) catch {};
             },
             else => {},
         }
