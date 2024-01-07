@@ -74,7 +74,7 @@ const MADTINTSourceOverride = packed struct {
 pub var CPU_COUNT: u8 = 0;
 pub var CPU_APIC_ID: [256]u8 = undefined;
 
-var LAPIC_REF: ?*LocalAPIC.LAPIC = null;
+pub var LAPIC_REF: ?*LocalAPIC.LAPIC = null;
 
 pub fn apic(entry: *APICHeader) void {
     const lapic: *LocalAPIC.LAPIC = @ptrFromInt(entry.interrupt_controller_addr + PhysAlloc.offset);
