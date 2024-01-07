@@ -18,13 +18,23 @@ pub fn init_exceptions() void {
         Interrupts.add_interrupt(@intCast(i), Interrupts.GateType.Interrupt, default_handler);
     }
 
+    for (0xF..0xFF) |i| {
+        Interrupts.add_interrupt(@intCast(i), Interrupts.GateType.Interrupt, default_h);
+    }
+
     Interrupts.load();
+}
+
+pub fn default_h(_: *Interrupts.Frame) void {
+    while (true) {
+        asm volatile ("hlt");
+    }
 }
 
 /// Only to be used on known interrupts
 pub fn default_handler(frame: *Interrupts.Frame) void {
     Procedures.write_fmt("Interrupt: {} invoked\n", .{frame.idx}) catch {};
-    Procedures.write_fmt("Interrupt: {s} invoked\n", .{Interrupts.name(frame.idx)}) catch {};
+    // Procedures.write_fmt("Interrupt: {s} invoked\n", .{Interrupts.name(frame.idx)}) catch {};
     while (true) {
         asm volatile ("hlt");
     }
@@ -43,7 +53,7 @@ pub fn init_int() void {
     asm volatile ("sti");
 }
 
-pub fn pit_handler(f: *Interrupts.Frame) void {
-    Procedures.write_fmt("Test {}!\n", .{f}) catch {};
-    APIC.LAPIC_REF.?.writeRegister(LAPIC.REG.EOI, 0);
+pub fn pit_handler(_: *Interrupts.Frame) void {
+    PIT.pit_ticks +%= 1;
+    APIC.LAPIC_REF.writeRegister(LAPIC.REG.EOI, 0);
 }
