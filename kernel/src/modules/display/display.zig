@@ -20,6 +20,7 @@ pub const Display = struct {
 
     pub fn swap(self: *const @This()) void {
         @memcpy(self.framebuffer, self.backbuffer.data);
+        @memset(self.backbuffer.data, 0);
     }
 };
 
@@ -27,6 +28,7 @@ pub const Framebuffer = struct {
     width: u64,
     height: u64,
     data: []u8,
+    pitch: u64,
 
     pub fn clear(self: *const @This()) void {
         for (0..self.width) |x| {
@@ -37,10 +39,10 @@ pub const Framebuffer = struct {
     }
 
     pub inline fn setPixel(self: *const @This(), x: u64, y: u64, r: u8, g: u8, b: u8, a: u8) void {
-        self.data[x * 4 + y * self.width * 4] = r;
-        self.data[x * 4 + 1 + y * self.width * 4] = g;
-        self.data[x * 4 + 2 + y * self.width * 4] = b;
-        self.data[x * 4 + 3 + y * self.width * 4] = a;
+        self.data[x * 4 + y * self.pitch] = r;
+        self.data[x * 4 + 1 + y * self.pitch] = g;
+        self.data[x * 4 + 2 + y * self.pitch] = b;
+        self.data[x * 4 + 3 + y * self.pitch] = a;
     }
 };
 
@@ -72,7 +74,12 @@ pub fn init() void {
         const display = Display{
             .height = framebuffer.height,
             .width = framebuffer.width,
-            .backbuffer = Framebuffer{ .width = framebuffer.width, .height = framebuffer.height, .data = backbuffer },
+            .backbuffer = Framebuffer{
+                .width = framebuffer.width,
+                .height = framebuffer.height,
+                .data = backbuffer,
+                .pitch = framebuffer.pitch,
+            },
             .framebuffer = framebuffer.data(),
         };
 
@@ -84,8 +91,12 @@ pub fn init() void {
     if (main_display) |i| {
         const display = displays[i];
 
+        Procedures.write_fmt("Test\n", .{}) catch {};
         display.backbuffer.clear();
+        Procedures.write_fmt("Test\n", .{}) catch {};
         display.backbuffer.setPixel(0, 0, 255, 255, 255, 0);
+        Procedures.write_fmt("Test\n", .{}) catch {};
         display.swap();
+        Procedures.write_fmt("Test\n", .{}) catch {};
     }
 }
