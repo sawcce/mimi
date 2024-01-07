@@ -1,6 +1,5 @@
 const Procedures = @import("../procedures.zig");
 const PhysAlloc = @import("../phys_alloc.zig");
-const Interrupts = @import("../interrupts.zig");
 const ACPI = @import("../acpi/acpi.zig");
 const LocalAPIC = @import("local_apic.zig");
 const IOAPIC = @import("io_apic.zig");

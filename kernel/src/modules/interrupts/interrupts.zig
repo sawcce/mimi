@@ -1,6 +1,6 @@
-const ModuleSpec = @import("module.zig").ModuleSpec;
+const ModuleSpec = @import("../module.zig").ModuleSpec;
 const Interrupts = @import("idt.zig");
-const Procedures = @import("procedures.zig");
+const Procedures = @import("../procedures.zig");
 
 const std = @import("std");
 
@@ -27,8 +27,8 @@ pub fn default_handler(frame: *Interrupts.Frame) void {
     }
 }
 
-pub const InterruptsModule = ModuleSpect{
+pub const InterruptsModule = ModuleSpec{
     .name = "Interrupts",
     .init = null,
     .deinit = null,
-}
+};
