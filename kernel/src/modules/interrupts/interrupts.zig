@@ -1,10 +1,10 @@
 const ModuleSpec = @import("module.zig").ModuleSpec;
-const Interrupts = @import("interrupts.zig");
+const Interrupts = @import("idt.zig");
 const Procedures = @import("procedures.zig");
 
 const std = @import("std");
 
-pub const Module = ModuleSpec{
+pub const ExceptionsModule = ModuleSpec{
     .name = "Exceptions",
     .init = init,
     .deinit = null,
@@ -25,4 +25,10 @@ pub fn default_handler(frame: *Interrupts.Frame) void {
     while (true) {
         asm volatile ("hlt");
     }
+}
+
+pub const InterruptsModule = ModuleSpect{
+    .name = "Interrupts",
+    .init = null,
+    .deinit = null,
 }
