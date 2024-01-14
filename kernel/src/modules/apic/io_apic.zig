@@ -60,7 +60,6 @@ pub const IOAPIC = struct {
         var data = data_;
 
         data.reserved = prev_entry.reserved;
-        Procedures.write_fmt("{}; \n", .{prev_entry}) catch {};
         const new_low = @as(*const u32, @ptrCast(&data)).*;
         const new_high = @as(*u32, @ptrFromInt(@intFromPtr(&data) + @sizeOf(u32))).*;
 

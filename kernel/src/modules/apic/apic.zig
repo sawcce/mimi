@@ -83,7 +83,7 @@ pub fn apic(entry: *APICHeader) void {
     LocalAPIC.initLapic(lapic);
 
     const lapic_id = lapic.readRegister(LocalAPIC.REG.ID);
-    Procedures.write_fmt("Local APIC id: {}\n", .{lapic_id}) catch {};
+    Procedures.write_fmt("[APIC] Local APIC id: {}\n", .{lapic_id}) catch {};
 
     var curr_addr = @intFromPtr(entry) + 44;
     const end_addr = @intFromPtr(entry) + entry.header.length;
