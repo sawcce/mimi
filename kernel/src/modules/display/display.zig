@@ -91,12 +91,8 @@ pub fn init() void {
     if (main_display) |i| {
         const display = displays[i];
 
-        Procedures.write_fmt("Test\n", .{}) catch {};
         display.backbuffer.clear();
-        Procedures.write_fmt("Test\n", .{}) catch {};
         display.backbuffer.setPixel(0, 0, 255, 255, 255, 0);
-        Procedures.write_fmt("Test\n", .{}) catch {};
         display.swap();
-        Procedures.write_fmt("Test\n", .{}) catch {};
     }
 }
