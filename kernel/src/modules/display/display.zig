@@ -24,6 +24,17 @@ pub const Display = struct {
     }
 };
 
+pub const Color = packed struct(u32) {
+    b: u8,
+    g: u8,
+    r: u8,
+    _: u8,
+
+    pub fn from_u32(i: u32) Color {
+        return @as(*const Color, @ptrCast(&i)).*;
+    }
+};
+
 pub const Framebuffer = struct {
     width: u64,
     height: u64,
@@ -34,6 +45,14 @@ pub const Framebuffer = struct {
         for (0..self.width) |x| {
             for (0..self.height) |y| {
                 self.setPixel(x, y, 0, 0, 0, 0);
+            }
+        }
+    }
+
+    pub fn fill(self: *const @This(), color: Color) void {
+        for (0..self.width) |x| {
+            for (0..self.height) |y| {
+                self.setPixel(x, y, color.r, color.g, color.b, color._);
             }
         }
     }
@@ -91,8 +110,7 @@ pub fn init() void {
     if (main_display) |i| {
         const display = displays[i];
 
-        display.backbuffer.clear();
-        display.backbuffer.setPixel(0, 0, 255, 255, 255, 0);
+        display.backbuffer.fill(Color.from_u32(0x121212));
         display.swap();
     }
 }
