@@ -76,6 +76,8 @@ pub const SDTHeader = extern struct {
     creator_revision: u32,
 };
 
+pub var MCFG_table_ptr: ?*SDTHeader = null;
+
 pub fn init() void {
     if (RSDPRequest.response == null) return;
     const rsdp_response = RSDPRequest.response.?;
@@ -90,6 +92,7 @@ pub fn init() void {
         const entry = xsdt.getEntry(i);
         switch (entry.signature) {
             Signature.APIC => Apic.apic(@ptrCast(entry)),
+            Signature.MCFG => MCFG_table_ptr = entry,
             else => {},
         }
     }

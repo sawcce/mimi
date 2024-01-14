@@ -19,6 +19,7 @@ const Procedures = @import("modules/procedures.zig");
 const Interrupts = @import("modules/interrupts/interrupts.zig");
 const PhysAlloc = @import("modules/phys_alloc.zig");
 const ACPI = @import("modules/acpi/acpi.zig");
+const PCI = @import("modules/pci/pci.zig");
 const Display = @import("modules/display/display.zig");
 
 const Modules = [_]Module.ModuleSpec{
@@ -26,6 +27,7 @@ const Modules = [_]Module.ModuleSpec{
     Interrupts.ExceptionsModule,
     ACPI.Module,
     Interrupts.InterruptsModule,
+    PCI.Module,
     Display.Module,
 };
 
