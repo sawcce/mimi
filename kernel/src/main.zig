@@ -45,9 +45,11 @@ export fn _start() callconv(.C) noreturn {
 }
 
 fn main() !void {
+    if (GDT.Module.init) |init| init();
     if (PhysAlloc.Module.init) |init| init();
 
     Module.init();
+    try Module.loaded_modules.append(GDT.Module);
     try Module.loaded_modules.append(PhysAlloc.Module);
 
     try Module.init_modules(&Modules);
