@@ -14,6 +14,7 @@ inline fn done() noreturn {
     }
 }
 
+const GDT = @import("modules/gdt/gdt.zig");
 const Procedures = @import("modules/procedures.zig");
 const Interrupts = @import("modules/interrupts/interrupts.zig");
 const PhysAlloc = @import("modules/phys_alloc.zig");
