@@ -88,8 +88,6 @@ pub fn init() void {
             return;
         };
 
-        Procedures.write_fmt("{}, X: {}, Y: {}\n", .{ framebuffer, backbuffer.len, framebuffer.data().len }) catch {};
-
         const display = Display{
             .height = framebuffer.height,
             .width = framebuffer.width,
