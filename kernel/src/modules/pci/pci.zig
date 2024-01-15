@@ -22,15 +22,14 @@ pub fn init() void {
 }
 
 pub const MCFGTable = extern struct {
-    header: ACPI.SDTHeader align(1),
-    _: u64,
+    header: ACPI.SDTHeader,
+    _: u64 align(1),
 
     pub fn getEntriesAmount(self: *align(4) const @This()) usize {
         return (self.header.length - @sizeOf(MCFGTable)) / 16;
     }
 
     pub fn getEntry(self: *align(4) @This(), i: usize) *align(1) ConfigurationEntry {
-        @compileLog(@sizeOf(MCFGTable));
         return @ptrFromInt(@intFromPtr(self) + 44 + @sizeOf(ConfigurationEntry) * i);
     }
 };
