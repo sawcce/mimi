@@ -21,6 +21,7 @@ const PhysAlloc = @import("modules/phys_alloc.zig");
 const ACPI = @import("modules/acpi/acpi.zig");
 const PCI = @import("modules/pci/pci.zig");
 const Display = @import("modules/display/display.zig");
+const USB = @import("modules/usb/usb.zig");
 
 const Modules = [_]Module.ModuleSpec{
     Procedures.Module,
@@ -29,6 +30,7 @@ const Modules = [_]Module.ModuleSpec{
     Interrupts.InterruptsModule,
     PCI.Module,
     Display.Module,
+    USB.Module,
 };
 
 // The following will be our kernel's entry point.
