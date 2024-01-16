@@ -3,6 +3,8 @@ pub const ACPI = @import("../acpi/acpi.zig");
 pub const Procedures = @import("../procedures.zig");
 pub const PhysAlloc = @import("../phys_alloc.zig");
 
+pub const std = @import("std");
+
 pub const Module = ModuleSpec{
     .name = "PCI(e) support",
     .init = init,
@@ -10,16 +12,56 @@ pub const Module = ModuleSpec{
 };
 
 pub var MCFG_table: *align(4) MCFGTable = undefined;
+pub var functions: std.ArrayList(FunctionWrapper) = undefined;
 
 pub fn init() void {
     if (ACPI.MCFG_table_ptr) |ptr| MCFG_table = @ptrCast(ptr);
-    Procedures.write_fmt("Found MCFG table: {}, with {} entries\n", .{ MCFG_table, MCFG_table.getEntriesAmount() }) catch {};
+    Procedures.write_fmt("[PCIE] Found MCFG table: {}, with {} entries\n", .{ MCFG_table, MCFG_table.getEntriesAmount() }) catch {};
+    functions = std.ArrayList(FunctionWrapper).initCapacity(PhysAlloc.allocator(), 10) catch {
+        return;
+    };
 
     for (0..MCFG_table.getEntriesAmount()) |i| {
-        const e = MCFG_table.getEntry(i);
-        Procedures.write_fmt("Entry: {}\n", .{e}) catch {};
+        const controller = MCFG_table.getEntry(i);
+        Procedures.write_fmt("[PCIE] Bus: {}\n", .{controller}) catch {};
+
+        for (controller.start_pci_bus..controller.end_pci_bus) |bus_id| {
+            for (0..16) |device_id| {
+                for (0..8) |function_id| {
+                    handlePCIEFunction(controller.base_address, i, bus_id, device_id, function_id);
+                }
+            }
+        }
+    }
+
+    for (functions.items) |function_| {
+        const function = function_.function_ptr;
+        Procedures.write_fmt("[PCIE Function] Class code: {x}, Vendor ID: {x}, Device ID: {x}\n", .{ function.class_code, function.vendor_id, function.device_id }) catch {};
     }
 }
+
+inline fn handlePCIEFunction(base_address: u64, controller_id: usize, bus_id: usize, device_id: usize, function_id: usize) void {
+    const function: *align(1) PCIEFunction = @ptrFromInt(base_address + PhysAlloc.offset + (bus_id << 20) + (device_id << 15) + (function_id << 12));
+    if (function.class_code == 0xffffff) return;
+
+    functions.append(FunctionWrapper{
+        .controller_id = controller_id,
+        .bus_id = @intCast(bus_id),
+        .device_id = @intCast(device_id),
+        .function_id = @intCast(function_id),
+        .function_ptr = function,
+    }) catch {
+        return;
+    };
+}
+
+pub const FunctionWrapper = struct {
+    controller_id: usize,
+    bus_id: u8,
+    device_id: u8,
+    function_id: u8,
+    function_ptr: *align(1) PCIEFunction,
+};
 
 pub const MCFGTable = extern struct {
     header: ACPI.SDTHeader,
@@ -42,7 +84,7 @@ pub const ConfigurationEntry = packed struct {
     _: u32,
 };
 
-pub const ExtendedConfigSpace = packed struct {
+pub const PCIEFunction = packed struct {
     vendor_id: u16,
     device_id: u16,
     command: u16,
