@@ -12,7 +12,7 @@ pub const Module = ModuleSpec{
 };
 
 pub var MCFG_table: *align(4) MCFGTable = undefined;
-pub var functions: std.ArrayList(FunctionWrapper) = undefined;
+var functions: std.ArrayList(FunctionWrapper) = undefined;
 
 pub fn init() void {
     if (ACPI.MCFG_table_ptr) |ptr| MCFG_table = @ptrCast(ptr);
@@ -38,6 +38,10 @@ pub fn init() void {
         const function = function_.function_ptr;
         Procedures.write_fmt("[PCIE Function] Class code: {x}, Vendor ID: {x}, Device ID: {x}\n", .{ function.class_code, function.vendor_id, function.device_id }) catch {};
     }
+}
+
+pub fn getFunctions() []FunctionWrapper {
+    return functions.items;
 }
 
 inline fn handlePCIEFunction(base_address: u64, controller_id: usize, bus_id: usize, device_id: usize, function_id: usize) void {
