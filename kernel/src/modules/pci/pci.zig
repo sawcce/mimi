@@ -33,11 +33,6 @@ pub fn init() void {
             }
         }
     }
-
-    for (functions.items) |function_| {
-        const function = function_.function_ptr;
-        Procedures.write_fmt("[PCIE Function] Class code: {x}, Vendor ID: {x}, Device ID: {x}\n", .{ function.class_code, function.vendor_id, function.device_id }) catch {};
-    }
 }
 
 pub fn getFunctions() []FunctionWrapper {
