@@ -30,6 +30,7 @@ pub fn make_trampoline(comptime interruptIdx: u8) *const Trampoline {
 
 export fn catcher() callconv(.Naked) void {
     asm volatile (
+        \\push %%rsp
         \\push %%rax
         \\push %%rbx
         \\push %%rcx
@@ -62,6 +63,7 @@ export fn catcher() callconv(.Naked) void {
         \\pop %%rcx
         \\pop %%rbx
         \\pop %%rax
+        \\pop %%rsp
         \\add $8, %%rsp
         \\iretq
     );
@@ -83,6 +85,7 @@ pub const Frame = extern struct {
     rcx: u64,
     rbx: u64,
     rax: u64,
+    rsp: u64,
     idx: u64,
 };
 
