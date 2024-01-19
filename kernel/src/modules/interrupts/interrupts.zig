@@ -58,11 +58,9 @@ var ticks_last_sched: u128 = 0;
 pub fn pit_handler(frame: *Interrupts.Frame) void {
     PIT.pit_ticks +%= 1;
 
-    if (PIT.pit_ticks - ticks_last_sched > 50) {
-        // Procedures.write_fmt("PTR: {*}\n", .{frame}) catch {};
+    if (PIT.pit_ticks - ticks_last_sched > 5) {
         @import("../task.zig").schedule(frame);
         ticks_last_sched = PIT.pit_ticks;
-        Procedures.write_fmt("End frame: {}\n", .{frame}) catch {};
     }
     APIC.LAPIC_REF.writeRegister(LAPIC.REG.EOI, 0);
 }
