@@ -50,7 +50,6 @@ export fn _start() callconv(.C) noreturn {
 
 const Task = @import("./modules/task.zig");
 var t: Task.Task = .{ .name = "boot", .started = true };
-var t2: Task.Task = .{ .name = "second", .function = &test_test, .started = false };
 
 fn main() !void {
     if (GDT.Module.init) |init| init();
@@ -66,13 +65,7 @@ fn main() !void {
     try Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
 
-    asm volatile ("cli");
-    t.next_task = &t2;
-    t2.next_task = &t;
-    const stack = try PhysAlloc.allocator().alloc(u8, 1000);
-    t2.frame.rsp = @intFromPtr(stack.ptr) + stack.len;
-    t2.frame.rbp = @intFromPtr(stack.ptr) + stack.len;
-    asm volatile ("sti");
+    try Task.schedule_task("Second Task", test_test);
 
     while (true) {
         Procedures.write_message("Test\n");
