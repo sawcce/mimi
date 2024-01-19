@@ -48,13 +48,13 @@ export fn _start() callconv(.C) noreturn {
     done();
 }
 
+const Task = @import("./modules/task.zig");
+var t: Task.Task = .{ .name = "boot", .started = true };
+var t2: Task.Task = .{ .name = "second", .function = &test_test, .started = false };
+
 fn main() !void {
     if (GDT.Module.init) |init| init();
     if (PhysAlloc.Module.init) |init| init();
-
-    const Task = @import("./modules/task.zig");
-
-    var t: Task.Task = .{ .name = "boot" };
 
     t.next_task = &t;
     Task.current_task = &t;
@@ -66,32 +66,22 @@ fn main() !void {
     try Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
 
-    var t2: Task.Task = .{ .name = "second" };
+    asm volatile ("cli");
     t.next_task = &t2;
     t2.next_task = &t;
-    const stack = try PhysAlloc.allocator().alloc(u8, 100000);
+    const stack = try PhysAlloc.allocator().alloc(u8, 1000);
     t2.frame.rsp = @intFromPtr(stack.ptr) + stack.len;
     t2.frame.rbp = @intFromPtr(stack.ptr) + stack.len;
-    Task.new_task = &t2;
-    Task.function = &test_test;
+    asm volatile ("sti");
 
-    Task.switch_tasks();
-
-    // Procedures.write_message("[ Hey ]!\n");
-    // debug_stack();
     while (true) {
         Procedures.write_message("Test\n");
-        asm volatile ("hlt");
     }
 }
 
 pub fn test_test() void {
-    Procedures.write_fmt("========= Test ==========\n", .{}) catch {};
-    debug_stack();
-    Procedures.write_fmt("========= Test END ==========\n", .{}) catch {};
-
     while (true) {
-        // Procedures.write_message("Hello! :3\n");
+        Procedures.write_message("Hello!\n");
     }
 }
 
