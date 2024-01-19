@@ -13,8 +13,8 @@ pub fn schedule_task(name: []const u8, function: *const fn () void) !void {
 
     task.started = false;
     task.function = function;
+    task.next_task = current_task.next_task;
     current_task.next_task = task;
-    task.next_task = current_task;
 
     const stack = try PhysAlloc.allocator().alloc(u8, 1000);
     task.frame.rsp = @intFromPtr(stack.ptr) + stack.len;
