@@ -28,7 +28,7 @@ pub const Color = packed struct(u32) {
     b: u8,
     g: u8,
     r: u8,
-    _: u8,
+    _: u8 = 0,
 
     pub fn from_u32(i: u32) Color {
         return @as(*const Color, @ptrCast(&i)).*;
@@ -110,5 +110,17 @@ pub fn init() void {
 
         display.backbuffer.fill(Color.from_u32(0x121212));
         display.swap();
+    }
+}
+
+pub fn fade() void {
+    var color: u8 = 0;
+    if (main_display) |i| {
+        while (true) {
+            const display = displays[i];
+            display.backbuffer.fill(Color{ .r = color, .g = color, .b = color });
+            display.swap();
+            color +%= 1;
+        }
     }
 }

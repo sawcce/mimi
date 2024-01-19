@@ -65,17 +65,8 @@ fn main() !void {
     try Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
 
-    try Task.schedule_task("Second Task", test_test);
-
-    while (true) {
-        Procedures.write_message("Test\n");
-    }
-}
-
-pub fn test_test() void {
-    while (true) {
-        Procedures.write_message("Hello!\n");
-    }
+    try Task.schedule_task("Fade", Display.fade);
+    done();
 }
 
 pub inline fn debug_stack() void {
