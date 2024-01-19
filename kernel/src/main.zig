@@ -69,16 +69,6 @@ fn main() !void {
     done();
 }
 
-pub inline fn debug_stack() void {
-    const rbp = asm volatile (""
-        : [ret] "={rbp}" (-> u64),
-    );
-    const rsp = asm volatile (""
-        : [ret] "={rsp}" (-> u64),
-    );
-    Procedures.write_fmt("Rsp: 0x{x}, Rbp: 0x{x}\n", .{ rsp, rbp }) catch {};
-}
-
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, e: ?usize) noreturn {
     @setCold(true);
 
