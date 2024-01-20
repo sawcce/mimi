@@ -65,7 +65,6 @@ fn main() !void {
     try Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
 
-    try Task.schedule_task("Fade", Display.fade);
     done();
 }
 
