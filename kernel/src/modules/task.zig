@@ -5,7 +5,10 @@ const PhysAlloc = @import("phys_alloc.zig");
 pub var current_task: *Task = undefined;
 
 pub fn schedule_task(name: []const u8, function: *const fn () void) !void {
-    asm volatile ("cli");
+    const eflags = asm volatile ("push %%rax; pushfq; pop %%rax"
+        : [ret] "={rax}" (-> u64),
+    );
+    asm volatile ("cli\npop %%rax");
 
     _ = name;
     const task_slice = try PhysAlloc.allocator().alloc(Task, 1);
@@ -19,6 +22,10 @@ pub fn schedule_task(name: []const u8, function: *const fn () void) !void {
     const stack = try PhysAlloc.allocator().alloc(u8, 1000);
     task.frame.rsp = @intFromPtr(stack.ptr) + stack.len;
     task.frame.rbp = @intFromPtr(stack.ptr) + stack.len;
+    task.frame.eflags = eflags;
+    task.frame.cs = 0x08;
+    task.frame.rip = @intFromPtr(function);
+    task.frame.ss = 0x10;
 
     asm volatile ("sti");
 }
@@ -30,10 +37,6 @@ pub inline fn schedule(frame: *Interrupts.Frame) void {
 
     if (!current_task.started) {
         // Inherit context from last task (SHOULD BE CHANGED!)
-        current_task.frame.cs = frame.cs;
-        current_task.frame.eflags = frame.eflags;
-        current_task.frame.ss = frame.ss;
-        current_task.frame.rip = @intFromPtr(current_task.function.?);
         current_task.started = true;
     }
 
