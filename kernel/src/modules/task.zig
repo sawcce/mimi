@@ -36,7 +36,6 @@ pub inline fn schedule(frame: *Interrupts.Frame) void {
     current_task = new_task_;
 
     if (!current_task.started) {
-        // Inherit context from last task (SHOULD BE CHANGED!)
         current_task.started = true;
     }
 
