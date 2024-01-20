@@ -84,6 +84,15 @@ pub const Frame = extern struct {
     rbx: u64,
     rax: u64,
     idx: u64,
+    // TODO: add different frame types
+    // based on whether int has an
+    // error code or not
+    // err_code: u64,
+    rip: u64,
+    cs: u64,
+    eflags: u64,
+    rsp: u64,
+    ss: u64,
 };
 
 export fn handler_fn(frame: *Frame) void {

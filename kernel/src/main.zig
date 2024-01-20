@@ -48,9 +48,15 @@ export fn _start() callconv(.C) noreturn {
     done();
 }
 
+const Task = @import("./modules/task.zig");
+var t: Task.Task = .{ .name = "boot", .started = true };
+
 fn main() !void {
     if (GDT.Module.init) |init| init();
     if (PhysAlloc.Module.init) |init| init();
+
+    t.next_task = &t;
+    Task.current_task = &t;
 
     Module.init();
     try Module.loaded_modules.append(GDT.Module);
@@ -58,6 +64,8 @@ fn main() !void {
 
     try Module.init_modules(&Modules);
     Procedures.write_message("Modules successfully initialized!\n");
+
+    done();
 }
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, e: ?usize) noreturn {
